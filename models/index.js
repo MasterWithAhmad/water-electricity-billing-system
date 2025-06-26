@@ -1,24 +1,34 @@
 const { sequelize } = require('../config/database');
+const fs = require('fs');
+const path = require('path');
+const basename = path.basename(__filename);
 
-// Import models
-const User = require('./User');
-const Customer = require('./Customer');
-const Bill = require('./Bill');
-const Payment = require('./Payment');
+const db = {};
 
-// Initialize models
-const models = {
-  User,
-  Customer,
-  Bill,
-  Payment,
-  sequelize
-};
+// Import all models from current directory
+fs.readdirSync(__dirname)
+  .filter(file => {
+    return (
+      file.indexOf('.') !== 0 &&
+      file !== basename &&
+      file.slice(-3) === '.js' &&
+      file.indexOf('.test.js') === -1
+    );
+  })
+  .forEach(file => {
+    const model = require(path.join(__dirname, file))(sequelize);
+    db[model.name] = model;
+  });
 
 // Set up associations
-Object.values(models)
-  .filter(model => typeof model.associate === 'function')
-  .forEach(model => model.associate(models));
+Object.keys(db).forEach(modelName => {
+  if (db[modelName].associate) {
+    db[modelName].associate(db);
+  }
+});
 
-// Export models and sequelize instance
-module.exports = models;
+db.sequelize = sequelize;
+
+module.exports = db;
+
+

@@ -1,5 +1,7 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
+
+// Import models for associations
 const Bill = require('./Bill');
 const Customer = require('./Customer');
 
@@ -28,7 +30,19 @@ const Payment = sequelize.define('Payment', {
     references: {
       model: 'bills',
       key: 'id'
-    }
+    },
+    field: 'bill_id'
+  },
+  billNumber: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'bill_number',
+    references: {
+      model: 'bills',
+      key: 'bill_number'
+    },
+    onUpdate: 'CASCADE',
+    onDelete: 'SET NULL'
   },
   amount: {
     type: DataTypes.DECIMAL(12, 2),
@@ -52,8 +66,18 @@ const Payment = sequelize.define('Payment', {
     allowNull: true
   },
   status: {
-    type: DataTypes.ENUM('pending', 'completed', 'failed', 'refunded'),
-    defaultValue: 'pending'
+    type: DataTypes.ENUM('pending', 'completed', 'failed', 'refunded', 'void'),
+    defaultValue: 'pending',
+    allowNull: false
+  },
+  createdBy: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    field: 'created_by',
+    references: {
+      model: 'users',
+      key: 'id'
+    }
   },
   notes: {
     type: DataTypes.TEXT,
@@ -85,11 +109,26 @@ Payment.beforeCreate(async (payment) => {
 });
 
 // Define associations
-Payment.belongsTo(Customer, { foreignKey: 'customerId', as: 'customer' });
-Customer.hasMany(Payment, { foreignKey: 'customerId', as: 'payments' });
+Payment.associate = (models) => {
+  Payment.belongsTo(models.Customer, {
+    foreignKey: 'customer_id',
+    as: 'customer'
+  });
+  
+  Payment.belongsTo(models.Bill, {
+    foreignKey: 'bill_id',
+    as: 'bill'
+  });
+};
 
-Payment.belongsTo(Bill, { foreignKey: 'billId', as: 'bill' });
-Bill.hasMany(Payment, { foreignKey: 'billId', as: 'payments' });
+// Set up model name and options
+Object.assign(Payment, {
+  tableName: 'payments',
+  underscored: true,
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at'
+});
 
 // After a payment is created, update the related bill status if applicable
 Payment.afterCreate(async (payment, options) => {

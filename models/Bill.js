@@ -1,6 +1,9 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
+
+// Import models for associations
 const Customer = require('./Customer');
+const Payment = require('./Payment');
 
 const Bill = sequelize.define('Bill', {
   id: {
@@ -11,11 +14,13 @@ const Bill = sequelize.define('Bill', {
   billNumber: {
     type: DataTypes.STRING,
     unique: true,
-    allowNull: false
+    allowNull: false,
+    field: 'bill_number'
   },
   customerId: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    field: 'customer_id',
     references: {
       model: 'customers',
       key: 'id'
@@ -25,33 +30,34 @@ const Bill = sequelize.define('Bill', {
     type: DataTypes.ENUM('water', 'electricity', 'combined'),
     allowNull: false
   },
-  issueDate: {
+  paymentDueDate: {
     type: DataTypes.DATE,
     allowNull: false,
+    field: 'payment_due_date',
     defaultValue: DataTypes.NOW
   },
   dueDate: {
     type: DataTypes.DATE,
-    allowNull: false
+    allowNull: false,
+    field: 'due_date',
   },
   previousReading: {
     type: DataTypes.DECIMAL(10, 2),
-    allowNull: true
+    allowNull: true,
+    field: 'previous_reading',
   },
   currentReading: {
     type: DataTypes.DECIMAL(10, 2),
-    allowNull: false
+    allowNull: true,
+    field: 'current_reading',
   },
   consumption: {
     type: DataTypes.DECIMAL(10, 2),
-    allowNull: false
+    allowNull: true,
+    field: 'consumption',
   },
   rate: {
     type: DataTypes.DECIMAL(10, 4),
-    allowNull: false
-  },
-  amount: {
-    type: DataTypes.DECIMAL(12, 2),
     allowNull: false
   },
   taxRate: {
@@ -60,15 +66,28 @@ const Bill = sequelize.define('Bill', {
   },
   taxAmount: {
     type: DataTypes.DECIMAL(10, 2),
-    defaultValue: 0
+    allowNull: true,
+    field: 'tax_amount',
   },
   totalAmount: {
     type: DataTypes.DECIMAL(12, 2),
-    allowNull: false
+    allowNull: false,
+    field: 'total_amount',
   },
-  status: {
+  paymentStatus: {
     type: DataTypes.ENUM('pending', 'paid', 'overdue', 'cancelled'),
-    defaultValue: 'pending'
+    defaultValue: 'pending',
+    allowNull: false,
+    field: 'payment_status'
+  },
+  createdBy: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    field: 'created_by',
+    references: {
+      model: 'users',
+      key: 'id'
+    }
   },
   paymentDate: {
     type: DataTypes.DATE,
@@ -85,6 +104,18 @@ const Bill = sequelize.define('Bill', {
   notes: {
     type: DataTypes.TEXT,
     allowNull: true
+  },
+  
+  // Timestamps
+  createdAt: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    field: 'created_at'
+  },
+  updatedAt: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    field: 'updated_at'
   }
 }, {
   timestamps: true,
@@ -93,7 +124,7 @@ const Bill = sequelize.define('Bill', {
 });
 
 // Generate a unique bill number before creating a new bill
-Bill.beforeCreate(async (bill) => {
+Bill.beforeCreate(async (bill, options) => {
   if (!bill.billNumber) {
     const prefix = bill.billType === 'water' ? 'WTR' : 
                   bill.billType === 'electricity' ? 'ELC' : 'BL';
@@ -124,8 +155,26 @@ Bill.beforeCreate(async (bill) => {
   }
 });
 
-// Define association with Customer
-Bill.belongsTo(Customer, { foreignKey: 'customerId', as: 'customer' });
-Customer.hasMany(Bill, { foreignKey: 'customerId', as: 'bills' });
+// Define associations
+Bill.associate = (models) => {
+  Bill.belongsTo(models.Customer, {
+    foreignKey: 'customer_id',
+    as: 'customer'
+  });
+  
+  Bill.hasMany(models.Payment, {
+    foreignKey: 'bill_id',
+    as: 'payments'
+  });
+};
+
+// Set up model name and options
+Object.assign(Bill, {
+  tableName: 'bills',
+  underscored: true,
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at'
+});
 
 module.exports = Bill;

@@ -1,6 +1,10 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
 
+// Import models for associations
+const Bill = require('./Bill');
+const Payment = require('./Payment');
+
 const Customer = sequelize.define('Customer', {
   id: {
     type: DataTypes.INTEGER,
@@ -11,6 +15,7 @@ const Customer = sequelize.define('Customer', {
     type: DataTypes.STRING,
     unique: true,
     allowNull: false,
+    field: 'customer_id',
     validate: {
       notEmpty: {
         msg: 'Customer ID is required'
@@ -20,6 +25,7 @@ const Customer = sequelize.define('Customer', {
   firstName: {
     type: DataTypes.STRING,
     allowNull: false,
+    field: 'first_name',
     validate: {
       notEmpty: {
         msg: 'First name is required'
@@ -28,6 +34,7 @@ const Customer = sequelize.define('Customer', {
   },
   lastName: {
     type: DataTypes.STRING,
+    field: 'last_name',
     allowNull: false,
     validate: {
       notEmpty: {
@@ -37,6 +44,7 @@ const Customer = sequelize.define('Customer', {
   },
   email: {
     type: DataTypes.STRING,
+    field: 'email',
     allowNull: false,
     validate: {
       isEmail: {
@@ -49,6 +57,7 @@ const Customer = sequelize.define('Customer', {
   },
   phone: {
     type: DataTypes.STRING,
+    field: 'phone',
     allowNull: false,
     validate: {
       notEmpty: {
@@ -58,6 +67,7 @@ const Customer = sequelize.define('Customer', {
   },
   address: {
     type: DataTypes.TEXT,
+    field: 'address',
     allowNull: false,
     validate: {
       notEmpty: {
@@ -67,6 +77,7 @@ const Customer = sequelize.define('Customer', {
   },
   city: {
     type: DataTypes.STRING,
+    field: 'city',
     allowNull: false,
     validate: {
       notEmpty: {
@@ -74,21 +85,23 @@ const Customer = sequelize.define('Customer', {
       }
     }
   },
-  state: {
+  country: {
     type: DataTypes.STRING,
+    field: 'country',
     allowNull: false,
     validate: {
       notEmpty: {
-        msg: 'State is required'
+        msg: 'Country is required'
       }
     }
   },
-  zipCode: {
+  postalCode: {
     type: DataTypes.STRING,
+    field: 'postal_code',
     allowNull: false,
     validate: {
       notEmpty: {
-        msg: 'ZIP code is required'
+        msg: 'Postal code is required'
       }
     }
   },
@@ -114,6 +127,18 @@ const Customer = sequelize.define('Customer', {
   notes: {
     type: DataTypes.TEXT,
     allowNull: true
+  },
+  
+  // Timestamps
+  createdAt: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    field: 'created_at'
+  },
+  updatedAt: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    field: 'updated_at'
   }
 }, {
   timestamps: true,
@@ -130,5 +155,18 @@ Customer.beforeCreate(async (customer) => {
     customer.customerId = `${prefix}${timestamp}${random}`.slice(0, 15);
   }
 });
+
+// Define associations
+Customer.associate = (models) => {
+  Customer.hasMany(models.Bill, {
+    foreignKey: 'customer_id',
+    as: 'bills'
+  });
+  
+  Customer.hasMany(models.Payment, {
+    foreignKey: 'customer_id',
+    as: 'payments'
+  });
+};
 
 module.exports = Customer;

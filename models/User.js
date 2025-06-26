@@ -2,6 +2,10 @@ const { DataTypes } = require('sequelize');
 const bcrypt = require('bcryptjs');
 const { sequelize } = require('../config/database');
 
+// Import models for associations
+const Bill = require('./Bill');
+const Payment = require('./Payment');
+
 const User = sequelize.define('User', {
   id: {
     type: DataTypes.INTEGER,
@@ -11,6 +15,7 @@ const User = sequelize.define('User', {
   name: {
     type: DataTypes.STRING,
     allowNull: false,
+    field: 'name',
     validate: {
       notEmpty: {
         msg: 'Name is required'
@@ -24,6 +29,7 @@ const User = sequelize.define('User', {
   email: {
     type: DataTypes.STRING,
     allowNull: false,
+    field: 'email',
     unique: {
       msg: 'Email already in use'
     },
@@ -39,6 +45,7 @@ const User = sequelize.define('User', {
   password: {
     type: DataTypes.STRING,
     allowNull: false,
+    field: 'password',
     validate: {
       notEmpty: {
         msg: 'Password is required'
@@ -50,18 +57,42 @@ const User = sequelize.define('User', {
     }
   },
   role: {
-    type: DataTypes.ENUM('admin', 'staff', 'customer'),
-    defaultValue: 'customer'
+    type: DataTypes.ENUM('admin', 'staff', 'user'),
+    defaultValue: 'user',
+    allowNull: false,
+    field: 'role'
   },
   isActive: {
     type: DataTypes.BOOLEAN,
-    defaultValue: true
+    defaultValue: true,
+    allowNull: false,
+    field: 'is_active'
   },
   lastLogin: {
-    type: DataTypes.DATE
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'last_login'
   },
-  resetPasswordToken: DataTypes.STRING,
-  resetPasswordExpires: DataTypes.DATE
+  resetPasswordToken: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'reset_password_token'
+  },
+  resetPasswordExpires: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'reset_password_expires'
+  },
+  createdAt: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    field: 'created_at'
+  },
+  updatedAt: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    field: 'updated_at'
+  }
 }, {
   timestamps: true,
   underscored: true,
@@ -97,5 +128,35 @@ User.findByCredentials = async (email, password) => {
   }
   return user;
 };
+
+// Define associations
+User.associate = (models) => {
+  User.hasMany(models.Bill, {
+    foreignKey: 'created_by',
+    as: 'bills_created'
+  });
+  
+  User.hasMany(models.Payment, {
+    foreignKey: 'created_by',
+    as: 'payments_processed'
+  });
+};
+
+// Set up model name and options
+Object.assign(User, {
+  tableName: 'users',
+  underscored: true,
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
+  defaultScope: {
+    attributes: { exclude: ['password', 'resetPasswordToken', 'resetPasswordExpires'] }
+  },
+  scopes: {
+    withPassword: {
+      attributes: {}
+    }
+  }
+});
 
 module.exports = User;
