@@ -1,53 +1,221 @@
-<%- include('layouts/main') %>
+<%- include('layouts/header') %>
+<%- include('partials/flash-messages') %>
 
-<div class="row">
-    <div class="col-12 mb-4">
-        <h1 class="display-4">Dashboard</h1>
-        <p class="lead">Welcome to the Water & Electricity Billing System</p>
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Dashboard</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item active">Overview</li>
+    </ol>
+    
+    <!-- Summary Cards -->
+    <div class="row">
+        <!-- Total Customers Card -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="fw-normal">Total Customers</h6>
+                            <h2 class="mb-0"><%= metrics.totalCustomers %></h2>
+                        </div>
+                        <i class="fas fa-users fa-3x opacity-50"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="/customers">View Details</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Pending Bills Card -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-warning text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="fw-normal">Pending Bills</h6>
+                            <h2 class="mb-0"><%= metrics.pendingBills.count %></h2>
+                            <small>$<%= metrics.pendingBills.amount.toFixed(2) %></small>
+                        </div>
+                        <i class="fas fa-file-invoice-dollar fa-3x opacity-50"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="/bills?status=pending">View Details</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Overdue Bills Card -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-danger text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="fw-normal">Overdue Bills</h6>
+                            <h2 class="mb-0"><%= metrics.overdueBills.count %></h2>
+                            <small>$<%= metrics.overdueBills.amount.toFixed(2) %></small>
+                        </div>
+                        <i class="fas fa-exclamation-triangle fa-3x opacity-50"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="/bills?status=overdue">View Details</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Monthly Revenue Card -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-success text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="fw-normal">Monthly Revenue</h6>
+                            <h2 class="mb-0">$<%= metrics.monthlyRevenue.toFixed(2) %></h2>
+                            <small>Current month</small>
+                        </div>
+                        <i class="fas fa-dollar-sign fa-3x opacity-50"></i>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="/reports/financial">View Report</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Activity -->
+    <div class="row">
+        <!-- Recent Payments -->
+        <div class="col-xl-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-money-bill-wave me-1"></i>
+                    Recent Payments
+                </div>
+                <div class="card-body">
+                    <% if (recentPayments.length > 0) { %>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Payment #</th>
+                                        <th>Customer</th>
+                                        <th>Amount</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% recentPayments.forEach(payment => { %>
+                                        <tr>
+                                            <td><a href="/payments/<%= payment.id %>"><%= payment.id %></a></td>
+                                            <td><%= payment.customer %></td>
+                                            <td class="text-success">$<%= payment.amount.toFixed(2) %></td>
+                                            <td><%= new Date(payment.paymentDate).toLocaleDateString() %></td>
+                                        </tr>
+                                    <% }) %>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="text-end mt-3">
+                            <a href="/payments" class="btn btn-primary">View All Payments</a>
+                        </div>
+                    <% } else { %>
+                        <div class="text-center py-4">
+                            <i class="fas fa-info-circle fa-2x text-muted mb-3"></i>
+                            <p class="text-muted">No recent payments found</p>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Bills -->
+        <div class="col-xl-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-file-invoice me-1"></i>
+                    Recent Bills
+                </div>
+                <div class="card-body">
+                    <% if (recentBills.length > 0) { %>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Bill #</th>
+                                        <th>Customer</th>
+                                        <th>Amount</th>
+                                        <th>Due Date</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% recentBills.forEach(bill => { %>
+                                        <tr>
+                                            <td><a href="/bills/<%= bill.id %>"><%= bill.billNumber %></a></td>
+                                            <td><%= bill.customer %></td>
+                                            <td>$<%= bill.totalAmount.toFixed(2) %></td>
+                                            <td><%= new Date(bill.dueDate).toLocaleDateString() %></td>
+                                            <td>
+                                                <span class="badge bg-<%= bill.status === 'paid' ? 'success' : bill.status === 'overdue' ? 'danger' : 'warning' %>">
+                                                    <%= bill.status.charAt(0).toUpperCase() + bill.status.slice(1).replace('_', ' ') %>
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="text-end mt-3">
+                            <a href="/bills" class="btn btn-primary">View All Bills</a>
+                        </div>
+                    <% } else { %>
+                        <div class="text-center py-4">
+                            <i class="fas fa-info-circle fa-2x text-muted mb-3"></i>
+                            <p class="text-muted">No recent bills found</p>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-bolt me-1"></i>
+                    Quick Actions
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-3">
+                        <a href="/bills/new" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Create New Bill
+                        </a>
+                        <a href="/payments/new" class="btn btn-success">
+                            <i class="fas fa-money-bill-wave me-2"></i>Record Payment
+                        </a>
+                        <a href="/customers/new" class="btn btn-info text-white">
+                            <i class="fas fa-user-plus me-2"></i>Add New Customer
+                        </a>
+                        <a href="/reports" class="btn btn-secondary">
+                            <i class="fas fa-chart-bar me-2"></i>View Reports
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
-<div class="row">
-    <!-- Summary Cards -->
-    <div class="col-md-3 mb-4">
-        <div class="card text-white bg-primary h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="card-title">Total Customers</h6>
-                        <h2 class="mb-0">0</h2>
-                    </div>
-                    <i class="fas fa-users fa-3x opacity-50"></i>
-                </div>
-            </div>
-            <div class="card-footer bg-transparent border-0">
-                <a href="/customers" class="text-white">View Details <i class="fas fa-arrow-right ms-1"></i></a>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-3 mb-4">
-        <div class="card text-white bg-success h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="card-title">Paid Bills</h6>
-                        <h2 class="mb-0">0</h2>
-                    </div>
-                    <i class="fas fa-receipt fa-3x opacity-50"></i>
-                </div>
-            </div>
-            <div class="card-footer bg-transparent border-0">
-                <a href="/bills?status=paid" class="text-white">View Details <i class="fas fa-arrow-right ms-1"></i></a>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-3 mb-4">
-        <div class="card text-white bg-warning h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
+<%- include('layouts/footer') %>
                         <h6 class="card-title">Pending Bills</h6>
                         <h2 class="mb-0">0</h2>
                     </div>
