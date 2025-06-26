@@ -7,7 +7,12 @@
     "dev": "nodemon app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["billing", "utilities", "water", "electricity"],
+  "keywords": [
+    "billing",
+    "utilities",
+    "water",
+    "electricity"
+  ],
   "author": "",
   "license": "ISC",
   "description": "A comprehensive Water and Electricity Billing System",
@@ -16,6 +21,7 @@
     "connect-flash": "^0.1.1",
     "dotenv": "^16.0.3",
     "ejs": "^3.1.10",
+    "exceljs": "^4.4.0",
     "express": "^5.1.0",
     "express-rate-limit": "^6.7.0",
     "express-session": "^1.17.3",
